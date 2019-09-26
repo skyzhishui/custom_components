@@ -177,7 +177,7 @@ class LifeSmartSwitch(SwitchDevice):
         send_data = json.dumps(send_values)
         req = urllib.request.Request(url=url, data=send_data.encode('utf-8'), headers=header, method='POST')
         response = json.loads(urllib.request.urlopen(req).read().decode('utf-8'))
-        return response['message']['data']['L1']['val'] == 1
+        return response['message']['data'][idx]['val'] == 1
 
     @property
     def name(self):
