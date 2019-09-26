@@ -1,0 +1,8 @@
+{
+  "domain": "moguhome",
+  "name": "skyzhishui",
+  "documentation": "https://blog.mogugu.net",
+  "requirements": [],
+  "dependencies": [],
+  "codeowners": ["@skyzhishui"]
+}
