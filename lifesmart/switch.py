@@ -77,7 +77,6 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
 
 class LifeSmartSwitch(SwitchDevice):
-    """Representation a switch that can be toggled using shell commands."""
 
     def __init__(
         self,
