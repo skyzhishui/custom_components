@@ -4,7 +4,7 @@ import urllib.request
 import json
 import time
 import hashlib
-
+import logging
 import voluptuous as vol
 
 import homeassistant.helpers.config_validation as cv
@@ -18,6 +18,8 @@ from homeassistant.const import (
     CONF_FRIENDLY_NAME,
     CONF_SWITCHES,
 )
+_LOGGER = logging.getLogger(__name__)
+
 CONF_LIFESMART_APPKEY = "appkey"
 CONF_LIFESMART_APPTOKEN = "apptoken"
 CONF_LIFESMART_USERTOKEN = "usertoken"
@@ -25,7 +27,40 @@ CONF_LIFESMART_USERID = "userid"
 CONF_LIFESMART_AGT = "agt"
 CONF_LIFESMART_DEV_ME = "me"
 CONF_LIFESMART_DEV_IDX = "idx"
-
+CONF_LIFESMART_ADD_TYPE = "add_type"
+SWTICH_TYPES = ["SL_SF_RC",
+"SL_SW_RC",
+"SL_SW_IF3",
+"SL_SF_IF3",
+"SL_SW_CP3",
+"SL_SW_RC3",
+"SL_SW_IF2",
+"SL_SF_IF2",
+"SL_SW_CP2",
+"SL_SW_FE2",
+"SL_SW_RC2",
+"SL_SW_ND2",
+"SL_MC_ND2",
+"SL_SW_IF1",
+"SL_SF_IF1",
+"SL_SW_CP1",
+"SL_SW_FE1",
+"SL_OL_W",
+"SL_SW_RC1",
+"SL_SW_ND1",
+"SL_MC_ND1",
+"SL_SW_ND3",
+"SL_MC_ND3",
+"SL_SW_ND2",
+"SL_MC_ND2",
+"SL_SW_ND1",
+"SL_MC_ND1",
+"SL_S",
+"SL_SPWM",
+"SL_P_SW",
+"SL_SW_DM1",
+"SL_SW_MJ2",
+"SL_SW_MJ1"]
 
 SWITCH_SCHEMA = vol.Schema(
     {
@@ -38,13 +73,38 @@ SWITCH_SCHEMA = vol.Schema(
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
     {
-        vol.Optional(CONF_LIFESMART_APPKEY, default="true"): cv.string,
-        vol.Optional(CONF_LIFESMART_APPTOKEN, default="true"): cv.string,
-        vol.Optional(CONF_LIFESMART_USERTOKEN, default="true"): cv.string,
-        vol.Optional(CONF_LIFESMART_USERID, default="true"): cv.string,
-        vol.Required(CONF_SWITCHES): cv.schema_with_slug_keys(SWITCH_SCHEMA)
+        vol.Required(CONF_LIFESMART_APPKEY): cv.string,
+        vol.Required(CONF_LIFESMART_APPTOKEN): cv.string,
+        vol.Required(CONF_LIFESMART_USERTOKEN): cv.string,
+        vol.Required(CONF_LIFESMART_USERID): cv.string,
+        vol.Optional(CONF_LIFESMART_ADD_TYPE, default="at"): cv.string,
+        vol.Optional(CONF_SWITCHES): cv.schema_with_slug_keys(SWITCH_SCHEMA)
     }
 )
+def switch_EpGetAll(appkey,apptoken,usertoken,userid):
+    url = "https://api.ilifesmart.com/app/api.EpGetAll"
+    tick = int(time.time())
+    sdata = "method:EpGetAll,time:"+str(tick)+",userid:"+userid+",usertoken:"+usertoken+",appkey:"+appkey+",apptoken:"+apptoken
+    sign = hashlib.md5(sdata.encode(encoding='UTF-8')).hexdigest()
+    send_values ={
+      "id": 1,
+      "method": "EpGetAll",
+      "system": {
+      "ver": "1.0",
+      "lang": "en",
+      "userid": userid,
+      "appkey": appkey,
+      "time": tick,
+      "sign": sign
+      }
+    }
+    header = {'Content-Type': 'application/json'}
+    send_data = json.dumps(send_values)
+    req = urllib.request.Request(url=url, data=send_data.encode('utf-8'), headers=header, method='POST')
+    response = json.loads(urllib.request.urlopen(req).read().decode('utf-8'))
+    if response['code'] == 0:
+        return response['message']
+    return False
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Find and return lifesmart switches."""
@@ -52,27 +112,50 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     apptoken = config.get(CONF_LIFESMART_APPTOKEN)
     usertoken = config.get(CONF_LIFESMART_USERTOKEN)
     userid = config.get(CONF_LIFESMART_USERID)
-    devices = config.get(CONF_SWITCHES, {})
+    add_type = config.get(CONF_LIFESMART_ADD_TYPE)
     switches = []
-    for object_id, device_config in devices.items():
-        switches.append(
-            LifeSmartSwitch(
-                hass,
-                object_id,
-                device_config.get(CONF_FRIENDLY_NAME, object_id),
-                appkey,
-                apptoken,
-                usertoken,
-                userid,
-                device_config.get(CONF_LIFESMART_AGT),
-                device_config.get(CONF_LIFESMART_DEV_ME),
-                device_config.get(CONF_LIFESMART_DEV_IDX),
+    if add_type == 'at':
+        devices = switch_EpGetAll(appkey,apptoken,usertoken,userid)
+        for dev in devices:
+            me = dev['me'] 
+            agt = dev['agt']
+            name = dev['name']
+            devtype = dev['devtype']
+            if devtype in SWTICH_TYPES:
+                for idx in dev['data']:
+                    switches.append(
+                        LifeSmartSwitch(
+                            hass,
+                            ("lifeswitch_"+ me + "_" + idx).lower(),
+                            name + "_" + idx,
+                            appkey,
+                            apptoken,
+                            usertoken,
+                            userid,
+                            agt,
+                            me,
+                            idx
+                        )
+                    )
+    else:
+        devices = config.get(CONF_SWITCHES, {})
+        for object_id, device_config in devices.items():
+           switches.append(
+                LifeSmartSwitch(
+                    hass,
+                    object_id,
+                    device_config.get(CONF_FRIENDLY_NAME, object_id),
+                    appkey,
+                    apptoken,
+                    usertoken,
+                    userid,
+                    device_config.get(CONF_LIFESMART_AGT),
+                    device_config.get(CONF_LIFESMART_DEV_ME),
+                    device_config.get(CONF_LIFESMART_DEV_IDX),
+                )
             )
-        )
-
     if not switches:
         return False
-
     add_entities(switches)
 
 
