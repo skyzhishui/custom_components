@@ -233,7 +233,7 @@ class LifeSmartSwitch(SwitchDevice):
         send_data = json.dumps(send_values)
         req = urllib.request.Request(url=url, data=send_data.encode('utf-8'), headers=header, method='POST')
         response = json.loads(urllib.request.urlopen(req).read().decode('utf-8'))
-	CAN_UPDATE = True
+        CAN_UPDATE = True
         return response['code']
 	
     @staticmethod
@@ -292,7 +292,7 @@ class LifeSmartSwitch(SwitchDevice):
 
     def update(self):
         """Update device state."""
-	if CAN_UPDATE == True
+        if CAN_UPDATE
             payload = str(self._get_state())
             self._state = payload.lower() == "true"
 
