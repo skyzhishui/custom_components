@@ -167,7 +167,8 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
 
 
 class LifeSmartSwitch(SwitchDevice):
-
+    
+    CAN_UPDATE = True
     def __init__(
         self,
         hass,
@@ -196,6 +197,7 @@ class LifeSmartSwitch(SwitchDevice):
 
     @staticmethod
     def _post_switch(self, cmd):
+        CAN_UPDATE = False
         url = "https://api.ilifesmart.com/app/api.EpSet"
         tick = int(time.time())
         appkey = self._appkey
@@ -231,6 +233,7 @@ class LifeSmartSwitch(SwitchDevice):
         send_data = json.dumps(send_values)
         req = urllib.request.Request(url=url, data=send_data.encode('utf-8'), headers=header, method='POST')
         response = json.loads(urllib.request.urlopen(req).read().decode('utf-8'))
+	CAN_UPDATE = True
         return response['code']
 	
     @staticmethod
@@ -289,8 +292,9 @@ class LifeSmartSwitch(SwitchDevice):
 
     def update(self):
         """Update device state."""
-        payload = str(self._get_state())
-        self._state = payload.lower() == "true"
+	if CAN_UPDATE == True
+            payload = str(self._get_state())
+            self._state = payload.lower() == "true"
 
     def turn_on(self, **kwargs):
         """Turn the device on."""
