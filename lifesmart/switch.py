@@ -292,7 +292,7 @@ class LifeSmartSwitch(SwitchDevice):
 
     def update(self):
         """Update device state."""
-        if CAN_UPDATE
+        if CAN_UPDATE:
             payload = str(self._get_state())
             self._state = payload.lower() == "true"
 
