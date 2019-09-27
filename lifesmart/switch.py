@@ -60,7 +60,14 @@ SWTICH_TYPES = ["SL_SF_RC",
 "SL_P_SW",
 "SL_SW_DM1",
 "SL_SW_MJ2",
-"SL_SW_MJ1"]
+"SL_SW_MJ1",
+"SL_OL",
+"SL_OL_3C",
+"SL_OL_DE",
+"SL_OL_UK",
+"SL_OL_UL",
+"OD_WE_OT1"
+]
 
 SWITCH_SCHEMA = vol.Schema(
     {
