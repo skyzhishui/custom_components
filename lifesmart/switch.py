@@ -68,7 +68,13 @@ SWTICH_TYPES = ["SL_SF_RC",
 "SL_OL_UL",
 "OD_WE_OT1"
 ]
-
+SPOT_TYPES = ["MSL_IRCTL",
+"OD_WE_IRCTL",
+"SL_SPOT "]
+KEY_NAME = 'keys'
+DEFAULT_KEY_NAME = '[""]'
+ENTITYID = 'entity_id'
+DOMAIN = 'switch'
 SWITCH_SCHEMA = vol.Schema(
     {
         vol.Optional(CONF_LIFESMART_AGT, default="true"): cv.string,
@@ -112,6 +118,126 @@ def switch_EpGetAll(appkey,apptoken,usertoken,userid):
     if response['code'] == 0:
         return response['message']
     return False
+def switch_GetRemoteList(appkey,apptoken,usertoken,userid,agt):
+    url = "https://api.ilifesmart.com/app/irapi.GetRemoteList"
+    tick = int(time.time())
+    sdata = "method:GetRemoteList,agt:"+agt+",time:"+str(tick)+",userid:"+userid+",usertoken:"+usertoken+",appkey:"+appkey+",apptoken:"+apptoken
+    sign = hashlib.md5(sdata.encode(encoding='UTF-8')).hexdigest()
+    send_values ={
+      "id": 1,
+      "method": "GetRemoteList",
+      "params": {
+          "agt": agt
+      }, 
+      "system": {
+      "ver": "1.0",
+      "lang": "en",
+      "userid": userid,
+      "appkey": appkey,
+      "time": tick,
+      "sign": sign
+      }
+    }
+    header = {'Content-Type': 'application/json'}
+    send_data = json.dumps(send_values)
+    req = urllib.request.Request(url=url, data=send_data.encode('utf-8'), headers=header, method='POST')
+    response = json.loads(urllib.request.urlopen(req).read().decode('utf-8'))
+    return response['message']
+
+def switch_GetRemotes(appkey,apptoken,usertoken,userid,agt,ai):
+    url = "https://api.ilifesmart.com/app/irapi.GetRemote"
+    tick = int(time.time())
+    sdata = "method:GetRemote,agt:"+agt+",ai:"+ai+",needKeys:2,time:"+str(tick)+",userid:"+userid+",usertoken:"+usertoken+",appkey:"+appkey+",apptoken:"+apptoken
+    sign = hashlib.md5(sdata.encode(encoding='UTF-8')).hexdigest()
+    send_values ={
+      "id": 1,
+      "method": "GetRemote",
+      "params": {
+          "agt": agt,
+          "ai": ai,
+          "needKeys": 2
+      },
+      "system": {
+      "ver": "1.0",
+      "lang": "en",
+      "userid": userid,
+      "appkey": appkey,
+      "time": tick,
+      "sign": sign
+      }
+    }
+    header = {'Content-Type': 'application/json'}
+    send_data = json.dumps(send_values)
+    req = urllib.request.Request(url=url, data=send_data.encode('utf-8'), headers=header, method='POST')
+    response = json.loads(urllib.request.urlopen(req).read().decode('utf-8'))
+    return response['message']['codes']
+
+def switch_Sendkeys(appkey,apptoken,usertoken,userid,agt,ai,me,category,brand,keys):
+    url = "https://api.ilifesmart.com/app/irapi.SendKeys"
+    tick = int(time.time())
+    sdata = "method:SendKeys,agt:"+agt+",ai:"+ai+",brand:"+brand+",category:"+category+",keys:"+keys+",me:"+me+",time:"+str(tick)+",userid:"+userid+",usertoken:"+usertoken+",appkey:"+appkey+",apptoken:"+apptoken
+    sign = hashlib.md5(sdata.encode(encoding='UTF-8')).hexdigest()
+    print(sdata)
+    send_values ={
+      "id": 1,
+      "method": "SendKeys",
+      "params": {
+          "agt": agt,
+          "me": me,
+          "category": category,
+          "brand": brand,
+          "ai": ai,
+          "keys": keys
+      },
+      "system": {
+      "ver": "1.0",
+      "lang": "en",
+      "userid": userid,
+      "appkey": appkey,
+      "time": tick,
+      "sign": sign
+      }
+    }
+    header = {'Content-Type': 'application/json'}
+    send_data = json.dumps(send_values)
+    req = urllib.request.Request(url=url, data=send_data.encode('utf-8'), headers=header, method='POST')
+    response = json.loads(urllib.request.urlopen(req).read().decode('utf-8'))
+    return response
+def switch_Sendackeys(appkey,apptoken,usertoken,userid,agt,ai,me,category,brand,keys,power,mode,temp,wind,swing):                                                                             
+    url = "https://api.ilifesmart.com/app/irapi.SendACKeys"                                                                                                        
+    tick = int(time.time())                                                                                                                                      
+    sdata = "method:SendACKeys,agt:"+agt+",ai:"+ai+",brand:"+brand+",category:"+category+",keys:"+keys+",me:"+me+",mode:"+str(mode)+",power:"+str(power)+",swing:"+str(swing)+",temp:"+str(temp)+",wind:"+str(wind)+",time:"+str(tick)+",userid:"+userid+",usertoken:"+usertoken+",appkey:"+appkey+",apptoken:"+apptoken
+    sign = hashlib.md5(sdata.encode(encoding='UTF-8')).hexdigest()                                                                                                                                                 
+    send_values ={                                                                                                                                                                                                 
+      "id": 1,                                                                                                                                                                                                     
+      "method": "SendACKeys",                                                                                                                                                                                        
+      "params": {                                                                                                                                                                                                  
+          "agt": agt,                                                                                                                                                                                              
+          "me": me,                                                                                                                                                                                                
+          "category": category,                                                                                                                                                                                    
+          "brand": brand,                                                                                                                                                                                          
+          "ai": ai,                                                                                                                                                                                                
+          "keys": keys,
+          "power": power,
+          "mode": mode,
+          "temp": temp,
+          "wind": wind,
+          "swing": swing                                                                                                                                                                                            
+      },                                                                                                                                                                                                           
+      "system": {                                                                                                                                                                                                  
+      "ver": "1.0",                                                                                                                                                                                                
+      "lang": "en",                                                                                                                                                                                                
+      "userid": userid,                                                                                                                                                                                            
+      "appkey": appkey,                                                                                                                                                                                            
+      "time": tick,                                                                                                                                                                                                
+      "sign": sign                                                                                                                                                                                                 
+      }                                                                                                                                                                                                            
+    }
+    header = {'Content-Type': 'application/json'}                                                                                                                                                                  
+    send_data = json.dumps(send_values)                                                                                                                                                                            
+    req = urllib.request.Request(url=url, data=send_data.encode('utf-8'), headers=header, method='POST')                                                                                                           
+    response = json.loads(urllib.request.urlopen(req).read().decode('utf-8'))                                                                                                                                      
+    return response        
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Find and return lifesmart switches."""
@@ -141,7 +267,36 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
                             userid,
                             agt,
                             me,
-                            idx
+                            idx,
+                            "SWITCH",
+                            "NONE"
+                        )
+                    )
+            if devtype in SPOT_TYPES:
+                for idx in dev['data']:
+                    rmdata = "NONE"
+                    if idx == "RGB":
+                        rmdata = {}
+                        rmlist = switch_GetRemoteList(appkey,apptoken,usertoken,userid,agt)
+                        for ai in rmlist:
+                            rms = switch_GetRemotes(appkey,apptoken,usertoken,userid,agt,ai)
+                            rms['category'] = rmlist[ai]['category']
+                            rms['brand'] = rmlist[ai]['brand']
+                            rmdata[ai] = rms
+                    switches.append(
+                        LifeSmartSwitch(
+                            hass,
+                            ("lifespot_"+ me + "_" + idx).lower(),
+                            name + "_" + idx,
+                            appkey,
+                            apptoken,
+                            usertoken,
+                            userid,
+                            agt,
+                            me,
+                            idx,
+                            "SPOT",
+                            rmdata
                         )
                     )
     else:
@@ -159,15 +314,47 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
                     device_config.get(CONF_LIFESMART_AGT),
                     device_config.get(CONF_LIFESMART_DEV_ME),
                     device_config.get(CONF_LIFESMART_DEV_IDX),
+                    "NONE",
+                    "NONE"
                 )
             )
     if not switches:
         return False
     add_entities(switches)
+    
+    def send_keys(call):
+        """Handle the service call."""
+        agt = call.data['agt']
+        me = call.data['me']
+        ai = call.data['ai']
+        category = call.data['category']
+        brand = call.data['brand']
+        keys = call.data['keys']
+        restkey = switch_Sendkeys(appkey,apptoken,usertoken,userid,agt,ai,me,category,brand,keys)
+        _LOGGER.info("sendkey: %s",str(restkey))
+    def send_ackeys(call):
+        """Handle the service call."""
+        agt = call.data['agt']
+        me = call.data['me']
+        ai = call.data['ai']
+        category = call.data['category']
+        brand = call.data['brand']
+        keys = call.data['keys']
+        power = call.data['power']
+        mode = call.data['mode']
+        temp = call.data['temp']
+        wind = call.data['wind']
+        swing = call.data['swing']
+        restackey = switch_Sendackeys(appkey,apptoken,usertoken,userid,agt,ai,me,category,brand,keys,power,mode,temp,wind,swing)
+        _LOGGER.info("sendkey: %s",str(restackey))
 
+    hass.services.register(DOMAIN, 'send_keys', send_keys)
+    hass.services.register(DOMAIN, 'send_ackeys', send_ackeys)
+    return True
 
 class LifeSmartSwitch(SwitchDevice):
     
+
     def __init__(
         self,
         hass,
@@ -180,6 +367,8 @@ class LifeSmartSwitch(SwitchDevice):
         agt,
         me,
         idx,
+        devtype,
+        rmdata
     ):
         """Initialize the switch."""
         self._hass = hass
@@ -193,8 +382,10 @@ class LifeSmartSwitch(SwitchDevice):
         self._agt = agt
         self._me = me
         self._idx = idx
+        self._type = devtype
+        self._rmdata = rmdata
         self._tick = 0
-
+        
     @staticmethod
     def _post_switch(self, cmd):
         self._tick = int(time.time())
@@ -268,13 +459,13 @@ class LifeSmartSwitch(SwitchDevice):
         send_data = json.dumps(send_values)
         req = urllib.request.Request(url=url, data=send_data.encode('utf-8'), headers=header, method='POST')
         response = json.loads(urllib.request.urlopen(req).read().decode('utf-8'))
-        return response['message']['data'][idx]['val'] == 1
+        return response['message']['data'][idx]['type']%2 == 1
 
     @property
     def name(self):
         """Return the name of the switch."""
         return self._name
-
+ 
     @property
     def is_on(self):
         """Return true if device is on."""
@@ -284,6 +475,16 @@ class LifeSmartSwitch(SwitchDevice):
     def assumed_state(self):
         """Return true if we do optimistic updates."""
         return False
+    @property
+    def device_state_attributes(self):
+        """Return the state attributes."""
+        attrs = {"agt": self._agt,
+            "me": self._me,
+            "idx": self._idx,
+            "type": self._type,
+            "remotelist": self._rmdata
+            }
+        return attrs
 
     def _get_state(self):
         """get lifesmart switch state."""
@@ -291,7 +492,7 @@ class LifeSmartSwitch(SwitchDevice):
 
     def update(self):
         """Update device state."""
-        if  int(time.time()) - self._tick > 2:
+        if int(time.time()) - self._tick > 3:
             payload = str(self._get_state())
             self._state = payload.lower() == "true"
 
