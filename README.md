@@ -1,25 +1,31 @@
-lifesmart 开关接入 HomeAssistant插件，配置比较麻烦，但能用。
-使用方法：将lifesmart目录复制到config/custom_components/下
-再configuration.yaml文件中增加配置：
-配置模式一：手动添加开关设备
-switch:
-  - platform: lifesmart 
-    appkey: "your_appkey" 
-    apptoken: "your_apptoken" 
-    userid: "your_userid" 
-    usertoken: "your_usertoken" 
-    add_type: "mt"
-    switches: 
-      lifesmart_test: 
-        friendly_name: 'lifesmart开关' 
-        agt: "设备agt属性" 
-        me: "设备me属性" 
-        idx: "设备idx属性"
-配置模式二：自动注册开关设备
-switch:
-  - platform: lifesmart 
-    appkey: "your_appkey" 
-    apptoken: "your_apptoken" 
-    userid: "your_userid" 
-    usertoken: "your_usertoken" 
-    add_type: "at"
+使用说明
+==== 
+lifesmart 开关接入 HomeAssistant插件
+
+目前支持的设备：
+-------  
+1、开关；
+
+2、灯光：目前仅支持超级碗夜灯；
+
+3、万能遥控；
+
+4、窗帘电机（仅支持杜亚电机）
+
+5、动态感应器、门磁、环境感应器、甲醛/燃气感应器
+
+使用方法：
+-------  
+1、将lifesmart目录复制到config/custom_components/下
+
+2、在configuration.yaml文件中增加配置：
+
+
+lifesmart:
+  appkey: "your_appkey" <br>
+  apptoken: "your_apptoken"<br>
+  usertoken: "your_usertoken" <br>
+  userid: "your_userid"<br>
+  exclude:<br>
+    - 0011 #需屏蔽设备的me值<br>
+    
