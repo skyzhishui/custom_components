@@ -10,6 +10,8 @@ import websocket
 from datetime import timedelta
 
 import voluptuous as vol
+import sys
+sys.setrecursionlimit(100000)
 
 from homeassistant.const import (
     CONF_FRIENDLY_NAME,
@@ -28,44 +30,10 @@ CONF_LIFESMART_APPTOKEN = "apptoken"
 CONF_LIFESMART_USERTOKEN = "usertoken"
 CONF_LIFESMART_USERID = "userid"
 CONF_EXCLUDE_ITEMS = "exclude"
-SWTICH_TYPES = ["SL_SF_RC",
-"SL_SW_RC",
-"SL_SW_IF3",
-"SL_SF_IF3",
-"SL_SW_CP3",
-"SL_SW_RC3",
-"SL_SW_IF2",
-"SL_SF_IF2",
-"SL_SW_CP2",
-"SL_SW_FE2",
-"SL_SW_RC2",
-"SL_SW_ND2",
-"SL_MC_ND2",
+SWTICH_TYPES = ["SL_OL_W",
 "SL_SW_IF1",
-"SL_SF_IF1",
-"SL_SW_CP1",
-"SL_SW_FE1",
-"SL_OL_W",
-"SL_SW_RC1",
-"SL_SW_ND1",
-"SL_MC_ND1",
-"SL_SW_ND3",
-"SL_MC_ND3",
-"SL_SW_ND2",
-"SL_MC_ND2",
-"SL_SW_ND1",
-"SL_MC_ND1",
-"SL_S",
-"SL_SPWM",
-"SL_P_SW",
-"SL_SW_DM1",
-"SL_SW_MJ2",
-"SL_SW_MJ1",
-"SL_OL",
-"SL_OL_3C",
-"SL_OL_DE",
-"SL_OL_UK",
-"SL_OL_UL",
+"SL_SW_IF2",
+"SL_SW_IF3",
 "OD_WE_OT1"
 ]
 SPOT_TYPES = ["MSL_IRCTL",
@@ -153,7 +121,8 @@ def lifesmart_Sendkeys(appkey,apptoken,usertoken,userid,agt,ai,me,category,brand
     return response
 def lifesmart_Sendackeys(appkey,apptoken,usertoken,userid,agt,ai,me,category,brand,keys,power,mode,temp,wind,swing):                                                                             
     url = "https://api.ilifesmart.com/app/irapi.SendACKeys"                                                                                                        
-    tick = int(time.time()) 
+    tick = int(time.time())       
+    #keys = str(keys)
     sdata = "method:SendACKeys,agt:"+agt+",ai:"+ai+",brand:"+brand+",category:"+category+",keys:"+keys+",me:"+me+",mode:"+str(mode)+",power:"+str(power)+",swing:"+str(swing)+",temp:"+str(temp)+",wind:"+str(wind)+",time:"+str(tick)+",userid:"+userid+",usertoken:"+usertoken+",appkey:"+appkey+",apptoken:"+apptoken
     sign = hashlib.md5(sdata.encode(encoding='UTF-8')).hexdigest()     
     _LOGGER.debug("sendackey: %s",str(sdata))
@@ -190,7 +159,7 @@ def lifesmart_Sendackeys(appkey,apptoken,usertoken,userid,agt,ai,me,category,bra
     return response 
 
 def setup(hass, config):
-    """Set up the LifeSmart component."""
+    """Set up the Xiaomi component."""
     param = {}
     param['appkey'] = config[DOMAIN][CONF_LIFESMART_APPKEY]
     param['apptoken'] = config[DOMAIN][CONF_LIFESMART_APPTOKEN]
@@ -290,7 +259,7 @@ def setup(hass, config):
                 #_LOGGER.debug("websocket_msg_nid: %s",enid)
                 attrs = hass.states.get(enid).attributes
                 hass.states.set(enid, msg['msg']['v'], attrs)
-            elif devtype in GAS_SENSOR_TYPES:
+            elif devtype in GAS_SENSOR_TYPES and msg['msg']['val'] > 0:
                 enid = "sensor."+(devtype + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
                 #_LOGGER.debug("websocket_msg_nid: %s",enid)
                 attrs = hass.states.get(enid).attributes
@@ -388,6 +357,7 @@ class LifeSmartDevice(Entity):
 
     @staticmethod
     def _lifesmart_epset(self, type, val, idx):
+        #self._tick = int(time.time())
         url = "https://api.ilifesmart.com/app/api.EpSet"
         tick = int(time.time())
         appkey = self._appkey
@@ -421,8 +391,8 @@ class LifeSmartDevice(Entity):
         send_data = json.dumps(send_values)
         req = urllib.request.Request(url=url, data=send_data.encode('utf-8'), headers=header, method='POST')
         response = json.loads(urllib.request.urlopen(req).read().decode('utf-8'))
-        #_LOGGER.info("epset_send: %s",str(send_data))
-        #_LOGGER.info("epset_res: %s",str(response))
+        _LOGGER.info("epset_send: %s",str(send_data))
+        _LOGGER.info("epset_res: %s",str(response))
         return response['code']
 
     @staticmethod
@@ -463,7 +433,7 @@ class LifeSmartStatesManager(threading.Thread):
 
 
     def __init__(self, ws):
-        """Init LifeSmart websocket Manager."""
+        """Init LifeSmart Update Manager."""
         threading.Thread.__init__(self)
         self._run = False
         self._lock = threading.Lock()
@@ -477,13 +447,13 @@ class LifeSmartStatesManager(threading.Thread):
             time.sleep(10)
 
     def start_keep_alive(self):
-        """Start keep alive."""
+        """Start keep alive mechanism."""
         with self._lock:
             self._run = True
             threading.Thread.start(self)
 
     def stop_keep_alive(self):
-        """Stop keep alive."""
+        """Stop keep alive mechanism."""
         with self._lock:
             self._run = False
             self.join()
