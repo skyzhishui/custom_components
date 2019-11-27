@@ -87,6 +87,11 @@ GAS_SENSOR_TYPES = ["SL_SC_WA ",
 EV_SENSOR_TYPES = ["SL_SC_THL",
 "SL_SC_BE",
 "SL_SC_CQ"]
+LOCK_TYPES = ["SL_LK_LS",
+"SL_LK_GTM",
+"SL_LK_AG",
+"SL_LK_SG",
+"SL_LK_YL"]
 
 ENTITYID = 'entity_id'
 DOMAIN = 'lifesmart'
@@ -302,6 +307,13 @@ def setup(hass, config):
                 enid = "light."+(devtype + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
                 #_LOGGER.debug("websocket_msg_nid: %s",enid)
                 attrs = hass.states.get(enid).attributes
+                if msg['msg']['type'] % 2 == 1:
+                    hass.states.set(enid, 'on',attrs)
+                else:
+                    hass.states.set(enid, 'off',attrs)
+            elif devtype in LOCK_TYPES:
+                enid = "binary_sensor."+(devtype + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
+                attrs = {"val": msg['msg']['val'],"devtype": devtype,"ts": msg['msg']['ts'] }
                 if msg['msg']['type'] % 2 == 1:
                     hass.states.set(enid, 'on',attrs)
                 else:
