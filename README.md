@@ -1,6 +1,6 @@
 使用说明
 ==== 
-lifesmart 开关接入 HomeAssistant插件
+lifesmart 设备接入 HomeAssistant插件
 
 目前支持的设备：
 -------  
