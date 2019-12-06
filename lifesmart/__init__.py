@@ -3,11 +3,11 @@ import subprocess
 import urllib.request
 import json
 import time
+import datetime
 import hashlib
 import logging
 import threading
 import websocket
-from datetime import timedelta
 
 import voluptuous as vol
 import sys
@@ -16,6 +16,17 @@ sys.setrecursionlimit(100000)
 from homeassistant.const import (
     CONF_FRIENDLY_NAME,
 )
+from homeassistant.components.climate.const import (
+    HVAC_MODE_AUTO,
+    HVAC_MODE_COOL,
+    HVAC_MODE_FAN_ONLY,
+    HVAC_MODE_HEAT,
+    HVAC_MODE_DRY,
+    SUPPORT_FAN_MODE,
+    SUPPORT_TARGET_TEMPERATURE,
+    HVAC_MODE_OFF,
+)
+from homeassistant.components.fan import SPEED_HIGH, SPEED_LOW, SPEED_MEDIUM
 from homeassistant.core import callback
 from homeassistant.helpers import discovery
 import homeassistant.helpers.config_validation as cv
@@ -92,6 +103,15 @@ LOCK_TYPES = ["SL_LK_LS",
 "SL_LK_AG",
 "SL_LK_SG",
 "SL_LK_YL"]
+
+LIFESMART_STATE_LIST = [HVAC_MODE_OFF,
+HVAC_MODE_AUTO,
+HVAC_MODE_FAN_ONLY,
+HVAC_MODE_COOL,
+HVAC_MODE_HEAT,
+HVAC_MODE_DRY]
+
+CLIMATE_TYPES = ["V_AIR_P"]
 
 ENTITYID = 'entity_id'
 DOMAIN = 'lifesmart'
@@ -220,6 +240,8 @@ def setup(hass, config):
             discovery.load_platform(hass,"sensor", DOMAIN, {"dev": dev,"param": param}, config)
         elif devtype in SPOT_TYPES:
             discovery.load_platform(hass,"light", DOMAIN, {"dev": dev,"param": param}, config)
+        elif devtype in CLIMATE_TYPES:
+            discovery.load_platform(hass,"climate", DOMAIN, {"dev": dev,"param": param}, config)
 
     def send_keys(call):
         """Handle the service call."""
@@ -246,6 +268,16 @@ def setup(hass, config):
         swing = call.data['swing']
         restackey = lifesmart_Sendackeys(param['appkey'],param['apptoken'],param['usertoken'],param['userid'],agt,ai,me,category,brand,keys,power,mode,temp,wind,swing)
         _LOGGER.debug("sendkey: %s",str(restackey))
+    
+    def get_fan_mode(_fanspeed):
+        fanmode = None
+        if _fanspeed < 30:
+            fanmode = SPEED_LOW
+        elif _fanspeed < 65 and _fanspeed >= 30:
+            fanmode = SPEED_MEDIUM
+        elif _fanspeed >=65:
+            fanmode = SPEED_HIGH
+        return fanmode
     def on_message(ws, message):
         _LOGGER.info("websocket_msg: %s",str(message))
         msg = json.loads(message)
@@ -263,19 +295,13 @@ def setup(hass, config):
                     hass.states.set(enid, 'off',attrs)
             elif devtype in BINARY_SENSOR_TYPES and msg['msg']['idx'] in ["M","G","B","AXS","P1"]:
                 enid = "binary_sensor."+(devtype + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
-                #_LOGGER.debug("websocket_msg_nid: %s",enid)
                 attrs = hass.states.get(enid).attributes
-                #_LOGGER.debug("websocket_states: %s",str(attrs))
-                #sdata = { "entity_id":enid }
                 if msg['msg']['val'] == 1:
                     hass.states.set(enid, 'on',attrs)
                 else:
                     hass.states.set(enid, 'off',attrs)
             elif devtype in COVER_TYPES and msg['msg']['idx'] == "P1":
                 enid = "cover."+(devtype + "_" + msg['msg']['me']).lower()
-                #_LOGGER.debug("websocket_msg_nid: %s",enid)
-                #attrs = hass.states.get(enid).attributes
-                #stat = hass.states.get(enid).state
                 attrs = dict(hass.states.get(enid).attributes)
                 nval = msg['msg']['val']
                 ntype = msg['msg']['type']
@@ -311,9 +337,40 @@ def setup(hass, config):
                     hass.states.set(enid, 'on',attrs)
                 else:
                     hass.states.set(enid, 'off',attrs)
+            elif devtype in CLIMATE_TYPES:
+                enid = "climate."+(devtype + "_" + msg['msg']['me']).lower().replace(":","_").replace("@","_")
+                _idx = msg['msg']['idx']
+                #_LOGGER.info("websocket_enid: %s",str(enid))
+                attrs = dict(hass.states.get(enid).attributes)
+                nstat = hass.states.get(enid).state
+                if _idx == "O":
+                  if msg['msg']['type'] % 2 == 1:
+                    nstat = attrs['last_mode']
+                    hass.states.set(enid, nstat, attrs)
+                  else:
+                    nstat = HVAC_MODE_OFF
+                    hass.states.set(enid, nstat, attrs)
+                elif _idx == "MODE":
+                  if msg['msg']['type'] == 206:
+                    if nstat != HVAC_MODE_OFF:
+                      nstat = LIFESMART_STATE_LIST[msg['msg']['val']]
+                    attrs['last_mode'] = nstat
+                    hass.states.set(enid, nstat, attrs)
+                elif _idx == "F":
+                  if msg['msg']['type'] == 206:
+                    attrs['fan_mode'] = get_fan_mode(msg['msg']['val'])
+                    hass.states.set(enid, nstat, attrs)
+                elif _idx == "tT":
+                  if msg['msg']['type'] == 136:
+                    attrs['temperature'] = msg['msg']['v']
+                    hass.states.set(enid, nstat, attrs)
+                elif _idx == "T":
+                  if msg['msg']['type'] == 8:
+                    attrs['current_temperature'] = msg['msg']['v']
+                    hass.states.set(enid, nstat, attrs)
             elif devtype in LOCK_TYPES:
                 enid = "binary_sensor."+(devtype + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
-                attrs = {"val": msg['msg']['val'],"devtype": devtype,"ts": msg['msg']['ts'] }
+                attrs = {"val": msg['msg']['val'],"devtype": devtype,"last_time": datetime.datetime.fromtimestamp(msg['msg']['ts']/1000).strftime("%Y-%m-%d %H:%M:%S") }
                 if msg['msg']['type'] % 2 == 1:
                     hass.states.set(enid, 'on',attrs)
                 else:
