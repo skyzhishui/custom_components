@@ -14,6 +14,10 @@ lifesmart 设备接入 HomeAssistant插件
 
 5、动态感应器、门磁、环境感应器、甲醛/燃气感应器
 
+6、空调控制面板
+
+7、智能门锁信息反馈
+
 使用方法：
 -------  
 1、将lifesmart目录复制到config/custom_components/下
