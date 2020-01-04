@@ -218,7 +218,7 @@ def lifesmart_Sendackeys(appkey,apptoken,usertoken,userid,agt,ai,me,category,bra
     return response 
 
 def setup(hass, config):
-    """Set up the Xiaomi component."""
+    """Set up the lifesmart component."""
     param = {}
     param['appkey'] = config[DOMAIN][CONF_LIFESMART_APPKEY]
     param['apptoken'] = config[DOMAIN][CONF_LIFESMART_APPTOKEN]
