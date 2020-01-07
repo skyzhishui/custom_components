@@ -24,7 +24,7 @@ lifesmart 设备接入 HomeAssistant插件
 
 2、在configuration.yaml文件中增加配置：
 
-...
+```
 lifesmart:
   appkey: "your_appkey" <br>
   apptoken: "your_apptoken"<br>
@@ -32,5 +32,5 @@ lifesmart:
   userid: "your_userid"<br>
   exclude:<br>
     - 0011 #需屏蔽设备的me值<br>
-...
+```
     
