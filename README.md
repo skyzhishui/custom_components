@@ -26,11 +26,11 @@ lifesmart 设备接入 HomeAssistant插件
 
 ```
 lifesmart:
-  appkey: "your_appkey" <br>
-  apptoken: "your_apptoken"<br>
-  usertoken: "your_usertoken" <br>
-  userid: "your_userid"<br>
-  exclude:<br>
-    - 0011 #需屏蔽设备的me值<br>
+  appkey: "your_appkey" 
+  apptoken: "your_apptoken"
+  usertoken: "your_usertoken" 
+  userid: "your_userid"
+  exclude:
+    - 0011 #需屏蔽设备的me值,这个暂时为必填项，可以填任意内容
 ```
     
