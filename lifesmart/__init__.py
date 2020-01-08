@@ -8,6 +8,7 @@ import hashlib
 import logging
 import threading
 import websocket
+import asyncio
 
 import voluptuous as vol
 import sys
@@ -278,11 +279,8 @@ def setup(hass, config):
         elif _fanspeed >=65:
             fanmode = SPEED_HIGH
         return fanmode
-    def on_message(ws, message):
-        _LOGGER.info("websocket_msg: %s",str(message))
-        msg = json.loads(message)
-        if msg['type'] != "io":
-            return
+    
+    async def set_Event(msg):
         if msg['msg']['idx'] != "s" and msg['msg']['me'] not in exclude_items:
             devtype = msg['msg']['devtype']
             if devtype in SWTICH_TYPES:
@@ -375,9 +373,18 @@ def setup(hass, config):
                     hass.states.set(enid, 'on',attrs)
                 else:
                     hass.states.set(enid, 'off',attrs)
-                
+
+    def on_message(ws, message):
+        _LOGGER.info("websocket_msg: %s",str(message))
+        msg = json.loads(message)
+        if 'type' not in msg:
+            return
+        if msg['type'] != "io":
+            return
+        asyncio.run(set_Event(msg))
+
     def on_error(ws, error):
-        _LOGGER.debug(error)
+        _LOGGER.debug("websocket_error: %s",str(error))
 
     def on_close(ws):
         _LOGGER.debug("lifesmart websocket closed...")
