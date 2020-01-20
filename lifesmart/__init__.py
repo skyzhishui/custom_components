@@ -368,7 +368,10 @@ def setup(hass, config):
                     hass.states.set(enid, nstat, attrs)
             elif devtype in LOCK_TYPES:
                 enid = "binary_sensor."+(devtype + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
-                attrs = {"val": msg['msg']['val'],"devtype": devtype,"last_time": datetime.datetime.fromtimestamp(msg['msg']['ts']/1000).strftime("%Y-%m-%d %H:%M:%S") }
+                val = msg['msg']['val']
+                ulk_way = val >> 12
+                ulk_user = val & 0xfff
+                attrs = {"unlocking_way": ulk_way,"unlocking_user": ulk_user,"devtype": devtype,"last_time": datetime.datetime.fromtimestamp(msg['msg']['ts']/1000).strftime("%Y-%m-%d %H:%M:%S") }
                 if msg['msg']['type'] % 2 == 1:
                     hass.states.set(enid, 'on',attrs)
                 else:
