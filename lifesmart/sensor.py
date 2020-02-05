@@ -37,7 +37,7 @@ class LifeSmartSensor(LifeSmartDevice):
     def __init__(self, dev, idx, val, param):
         """Initialize the LifeSmartSensor."""
         super().__init__(dev, idx, val, param)
-        self.entity_id = ENTITY_ID_FORMAT.format(( dev['devtype'] + "_" + dev['me'] + "_" + idx).lower())
+        self.entity_id = ENTITY_ID_FORMAT.format(( dev['devtype'] + "_" + dev['agt'] + "_" + dev['me'] + "_" + idx).lower())
         devtype = dev['devtype']
         if devtype in EV_SENSOR_TYPES:
             if idx == "T" or idx == "P1":
