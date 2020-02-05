@@ -56,7 +56,7 @@ class LifeSmartClimateDevice(LifeSmartDevice, ClimateDevice):
         super().__init__(dev, idx, val, param)
         self._name = dev['name']
         cdata = dev['data']
-        self.entity_id = ENTITY_ID_FORMAT.format(( dev['devtype'] + "_" + dev['me']).lower().replace(":","_").replace("@","_"))
+        self.entity_id = ENTITY_ID_FORMAT.format(( dev['devtype'] + "_" + dev['agt'] + "_" + dev['me']).lower().replace(":","_").replace("@","_"))
         self._modes = LIFESMART_STATE_LIST
         if cdata['O']['type'] % 2 == 0:
             self._mode = LIFESMART_STATE_LIST[0]
@@ -138,9 +138,10 @@ class LifeSmartClimateDevice(LifeSmartDevice, ClimateDevice):
             super()._lifesmart_epset(self, "0x80", 0, "O")
             return
         if self._mode == HVAC_MODE_OFF:
-            if super()._lifesmart_epset(self, "0x81", 1, "O") != 0:
+            if super()._lifesmart_epset(self, "0x81", 1, "O") == 0:
+                time.sleep(2)
+            else:
                 return
-        time.sleep(2)
         super()._lifesmart_epset(self, "0xCE", LIFESMART_STATE_LIST.index(hvac_mode), "MODE")
 
 
