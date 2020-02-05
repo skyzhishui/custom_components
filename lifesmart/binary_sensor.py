@@ -33,7 +33,7 @@ class LifeSmartBinarySensor(LifeSmartDevice, BinarySensorDevice):
 
     def __init__(self, dev, idx, val, param):
         super().__init__(dev, idx, val, param)
-        self.entity_id = ENTITY_ID_FORMAT.format(( dev['devtype'] + "_" + dev['me'] + "_" + idx).lower())
+        self.entity_id = ENTITY_ID_FORMAT.format(( dev['devtype'] + "_" + dev['agt'] + "_" + dev['me'] + "_" + idx).lower())
         devtype = dev['devtype']
         if devtype in GUARD_SENSOR:
             self._device_class = "door"
@@ -55,3 +55,6 @@ class LifeSmartBinarySensor(LifeSmartDevice, BinarySensorDevice):
     def device_class(self):
         """Return the class of binary sensor."""
         return self._device_class
+
+
+
