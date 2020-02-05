@@ -284,22 +284,21 @@ def setup(hass, config):
         if msg['msg']['idx'] != "s" and msg['msg']['me'] not in exclude_items:
             devtype = msg['msg']['devtype']
             if devtype in SWTICH_TYPES:
-                enid = "switch."+(devtype + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
-                #_LOGGER.debug("websocket_msg_nid: %s",enid)
+                enid = "switch."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
                 attrs = hass.states.get(enid).attributes
                 if msg['msg']['val'] == 1:
                     hass.states.set(enid, 'on',attrs)
                 else:
                     hass.states.set(enid, 'off',attrs)
             elif devtype in BINARY_SENSOR_TYPES and msg['msg']['idx'] in ["M","G","B","AXS","P1"]:
-                enid = "binary_sensor."+(devtype + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
+                enid = "binary_sensor."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
                 attrs = hass.states.get(enid).attributes
                 if msg['msg']['val'] == 1:
                     hass.states.set(enid, 'on',attrs)
                 else:
                     hass.states.set(enid, 'off',attrs)
             elif devtype in COVER_TYPES and msg['msg']['idx'] == "P1":
-                enid = "cover."+(devtype + "_" + msg['msg']['me']).lower()
+                enid = "cover."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me']).lower()
                 attrs = dict(hass.states.get(enid).attributes)
                 nval = msg['msg']['val']
                 ntype = msg['msg']['type']
@@ -318,27 +317,23 @@ def setup(hass, config):
                         nstat = "closing"
                 hass.states.set(enid, nstat, attrs)
             elif devtype in EV_SENSOR_TYPES:
-                enid = "sensor."+(devtype + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
-                #_LOGGER.debug("websocket_msg_nid: %s",enid)
+                enid = "sensor."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
                 attrs = hass.states.get(enid).attributes
                 hass.states.set(enid, msg['msg']['v'], attrs)
             elif devtype in GAS_SENSOR_TYPES and msg['msg']['val'] > 0:
-                enid = "sensor."+(devtype + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
-                #_LOGGER.debug("websocket_msg_nid: %s",enid)
+                enid = "sensor."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
                 attrs = hass.states.get(enid).attributes
                 hass.states.set(enid, msg['msg']['val'], attrs)
             elif devtype in SPOT_TYPES:
-                enid = "light."+(devtype + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
-                #_LOGGER.debug("websocket_msg_nid: %s",enid)
+                enid = "light."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
                 attrs = hass.states.get(enid).attributes
                 if msg['msg']['type'] % 2 == 1:
                     hass.states.set(enid, 'on',attrs)
                 else:
                     hass.states.set(enid, 'off',attrs)
             elif devtype in CLIMATE_TYPES:
-                enid = "climate."+(devtype + "_" + msg['msg']['me']).lower().replace(":","_").replace("@","_")
+                enid = "climate."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me']).lower().replace(":","_").replace("@","_")
                 _idx = msg['msg']['idx']
-                #_LOGGER.info("websocket_enid: %s",str(enid))
                 attrs = dict(hass.states.get(enid).attributes)
                 nstat = hass.states.get(enid).state
                 if _idx == "O":
@@ -367,11 +362,14 @@ def setup(hass, config):
                     attrs['current_temperature'] = msg['msg']['v']
                     hass.states.set(enid, nstat, attrs)
             elif devtype in LOCK_TYPES:
-                enid = "binary_sensor."+(devtype + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
+                enid = "binary_sensor."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
                 val = msg['msg']['val']
                 ulk_way = val >> 12
                 ulk_user = val & 0xfff
-                attrs = {"unlocking_way": ulk_way,"unlocking_user": ulk_user,"devtype": devtype,"last_time": datetime.datetime.fromtimestamp(msg['msg']['ts']/1000).strftime("%Y-%m-%d %H:%M:%S") }
+                ulk_success = True
+                if ulk_user == 0:
+                    ulk_success = False
+                attrs = {"unlocking_way": ulk_way,"unlocking_user": ulk_user,"devtype": devtype,"unlocking_success": ulk_success,"last_time": datetime.datetime.fromtimestamp(msg['msg']['ts']/1000).strftime("%Y-%m-%d %H:%M:%S") }
                 if msg['msg']['type'] % 2 == 1:
                     hass.states.set(enid, 'on',attrs)
                 else:
