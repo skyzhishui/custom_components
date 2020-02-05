@@ -34,7 +34,7 @@ class LifeSmartSwitch(LifeSmartDevice, SwitchDevice):
     def __init__(self, dev, idx, val, param):
         """Initialize the switch."""
         super().__init__(dev, idx, val, param)
-        self.entity_id = ENTITY_ID_FORMAT.format(( dev['devtype'] + "_" + dev['me'] + "_" + idx).lower())
+        self.entity_id = ENTITY_ID_FORMAT.format(( dev['devtype'] + "_" + dev['agt'] + "_" + dev['me'] + "_" + idx).lower())
         if val['val'] == 1:
             self._state = True
         else:
