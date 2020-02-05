@@ -1,4 +1,4 @@
-"""Support for LifeSmart Gateway Light."""
+"""Support for LifeSmart Light."""
 import binascii
 import logging
 import struct
