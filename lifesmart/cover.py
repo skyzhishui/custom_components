@@ -27,7 +27,7 @@ class LifeSmartCover(LifeSmartDevice, CoverDevice):
         """Init LifeSmart cover device."""
         super().__init__(dev, idx, val, param)
         self._name = dev['name']
-        self.entity_id = ENTITY_ID_FORMAT.format(( dev['devtype'] + "_" + dev['me']).lower())
+        self.entity_id = ENTITY_ID_FORMAT.format(( dev['devtype'] + "_" + dev['agt'] + "_" + dev['me']).lower())
         self._pos = val['val']
         self._device_class = "curtain"
 
