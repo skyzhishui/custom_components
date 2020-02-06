@@ -40,6 +40,7 @@ class LifeSmartLight(LifeSmartDevice, Light):
     def __init__(self, dev, idx, val, param):
         """Initialize the LifeSmartLight."""
         super().__init__(dev, idx, val, param)
+        dev['agt'] = dev['agt'].replace("_","")
         self.entity_id = ENTITY_ID_FORMAT.format(( dev['devtype'] + "_" + dev['agt'] + "_" + dev['me'] + "_" + idx).lower())
         if val['type'] % 2 == 1:
             self._state = True
