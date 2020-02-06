@@ -282,6 +282,7 @@ def setup(hass, config):
     
     async def set_Event(msg):
         if msg['msg']['idx'] != "s" and msg['msg']['me'] not in exclude_items:
+            msg['msg']['agt'] = msg['msg']['agt'].replace("_","")
             devtype = msg['msg']['devtype']
             if devtype in SWTICH_TYPES:
                 enid = "switch."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
