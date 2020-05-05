@@ -42,9 +42,9 @@ class LifeSmartBinarySensor(LifeSmartDevice, BinarySensorDevice):
             self._device_class = "motion"
         else:
             self._device_class = "smoke"
-        if val['val'] == 1:
+        if (val['val'] == 1 and self._device_class != "door") or (val['val'] == 0 and self._device_class == "door"):
             self._state = True
-        else:
+        elif :
             self._state = False
 
     @property
