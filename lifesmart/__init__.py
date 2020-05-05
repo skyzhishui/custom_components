@@ -291,13 +291,21 @@ def setup(hass, config):
                     hass.states.set(enid, 'on',attrs)
                 else:
                     hass.states.set(enid, 'off',attrs)
-            elif devtype in BINARY_SENSOR_TYPES and msg['msg']['idx'] in ["M","G","B","AXS","P1"]:
-                enid = "binary_sensor."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
-                attrs = hass.states.get(enid).attributes
-                if msg['msg']['val'] == 1:
-                    hass.states.set(enid, 'on',attrs)
-                else:
-                    hass.states.set(enid, 'off',attrs)
+            elif devtype in BINARY_SENSOR_TYPES
+                if msg['msg']['idx'] in ["M","B","AXS","P1"]:
+                    enid = "binary_sensor."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
+                    attrs = hass.states.get(enid).attributes
+                    if msg['msg']['val'] == 1:
+                        hass.states.set(enid, 'on',attrs)
+                    else:
+                        hass.states.set(enid, 'off',attrs)
+                elif msg['msg']['idx'] in ["G"]:
+                    enid = "binary_sensor."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
+                    attrs = hass.states.get(enid).attributes
+                    if msg['msg']['val'] == 0:
+                        hass.states.set(enid, 'on',attrs)
+                    else:
+                        hass.states.set(enid, 'off',attrs)
             elif devtype in COVER_TYPES and msg['msg']['idx'] == "P1":
                 enid = "cover."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me']).lower()
                 attrs = dict(hass.states.get(enid).attributes)
