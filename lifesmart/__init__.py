@@ -291,7 +291,7 @@ def setup(hass, config):
                     hass.states.set(enid, 'on',attrs)
                 else:
                     hass.states.set(enid, 'off',attrs)
-            elif devtype in BINARY_SENSOR_TYPES
+            elif devtype in BINARY_SENSOR_TYPES:
                 if msg['msg']['idx'] in ["M","B","AXS","P1"]:
                     enid = "binary_sensor."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
                     attrs = hass.states.get(enid).attributes
