@@ -59,6 +59,9 @@ class LifeSmartSensor(LifeSmartDevice):
             elif idx == "P4":
                 self._device_class = "None"
                 self._unit = "mg/m3"
+            else:
+                self._device_class = "None"
+                self._unit = "None"
             self._state = val['v']
         else:
             self._unit = "None"
