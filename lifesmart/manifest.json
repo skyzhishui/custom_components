@@ -1,8 +1,11 @@
 {
-  "domain": "moguhome",
+  "domain": "lifesmart",
   "name": "skyzhishui",
-  "documentation": "https://blog.mogugu.net",
+  "documentation": "https://github.com/skyzhishui/custom_components",
   "requirements": [],
   "dependencies": [],
-  "codeowners": ["@skyzhishui"]
+  "codeowners": [
+    "@skyzhishui"
+  ],
+  "version": "20.12.16"
 }
