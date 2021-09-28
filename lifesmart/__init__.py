@@ -83,6 +83,14 @@ SWTICH_TYPES = ["SL_SF_RC",
 "OD_WE_OT1",
 "SL_NATURE"
 ]
+LIGHT_SWITCH_TYPES = ["SL_OL_W",
+"SL_SW_IF1",
+"SL_SW_IF2",
+"SL_SW_IF3",
+]
+QUANTUM_TYPES=["OD_WE_QUAN",
+]
+
 SPOT_TYPES = ["MSL_IRCTL",
 "OD_WE_IRCTL",
 "SL_SPOT"]
@@ -100,6 +108,10 @@ GAS_SENSOR_TYPES = ["SL_SC_WA ",
 EV_SENSOR_TYPES = ["SL_SC_THL",
 "SL_SC_BE",
 "SL_SC_CQ"]
+OT_SENSOR_TYPES = ["SL_SC_MHW",
+"SL_SC_BM",
+"SL_SC_G",
+"SL_SC_BG"]
 LOCK_TYPES = ["SL_LK_LS",
 "SL_LK_GTM",
 "SL_LK_AG",
@@ -238,12 +250,16 @@ def setup(hass, config):
             discovery.load_platform(hass,"binary_sensor", DOMAIN, {"dev": dev,"param": param}, config)
         elif devtype in COVER_TYPES:
             discovery.load_platform(hass,"cover", DOMAIN, {"dev": dev,"param": param}, config)
-        elif devtype in EV_SENSOR_TYPES or devtype in GAS_SENSOR_TYPES:
-            discovery.load_platform(hass,"sensor", DOMAIN, {"dev": dev,"param": param}, config)
         elif devtype in SPOT_TYPES:
             discovery.load_platform(hass,"light", DOMAIN, {"dev": dev,"param": param}, config)
         elif devtype in CLIMATE_TYPES:
             discovery.load_platform(hass,"climate", DOMAIN, {"dev": dev,"param": param}, config)
+        elif devtype in GAS_SENSOR_TYPES or devtype in EV_SENSOR_TYPES:
+            discovery.load_platform(hass,"sensor", DOMAIN, {"dev": dev,"param": param}, config)
+        if devtype in OT_SENSOR_TYPES:
+            discovery.load_platform(hass,"sensor", DOMAIN, {"dev": dev,"param": param}, config)
+        if devtype in LIGHT_SWITCH_TYPES:
+            discovery.load_platform(hass,"light", DOMAIN, {"dev": dev,"param": param}, config)
 
     def send_keys(call):
         """Handle the service call."""
@@ -283,30 +299,21 @@ def setup(hass, config):
     
     async def set_Event(msg):
         if msg['msg']['idx'] != "s" and msg['msg']['me'] not in exclude_items:
-            msg['msg']['agt'] = msg['msg']['agt'].replace("_","")
             devtype = msg['msg']['devtype']
-            if devtype in SWTICH_TYPES:
+            if devtype in SWTICH_TYPES and msg['msg']['idx'] in ["L1","L2","L3","P1","P2","P3"]:
                 enid = "switch."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
+                attrs = hass.states.get(enid).attributes
+                if msg['msg']['type'] % 2 == 1:
+                    hass.states.set(enid, 'on',attrs)
+                else:
+                    hass.states.set(enid, 'off',attrs)
+            elif devtype in BINARY_SENSOR_TYPES and msg['msg']['idx'] in ["M","G","B","AXS","P1"]:
+                enid = "binary_sensor."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
                 attrs = hass.states.get(enid).attributes
                 if msg['msg']['val'] == 1:
                     hass.states.set(enid, 'on',attrs)
                 else:
                     hass.states.set(enid, 'off',attrs)
-            elif devtype in BINARY_SENSOR_TYPES:
-                if msg['msg']['idx'] in ["M","B","AXS","P1"]:
-                    enid = "binary_sensor."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
-                    attrs = hass.states.get(enid).attributes
-                    if msg['msg']['val'] == 1:
-                        hass.states.set(enid, 'on',attrs)
-                    else:
-                        hass.states.set(enid, 'off',attrs)
-                elif msg['msg']['idx'] in ["G"]:
-                    enid = "binary_sensor."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
-                    attrs = hass.states.get(enid).attributes
-                    if msg['msg']['val'] == 0:
-                        hass.states.set(enid, 'on',attrs)
-                    else:
-                        hass.states.set(enid, 'off',attrs)
             elif devtype in COVER_TYPES and msg['msg']['idx'] == "P1":
                 enid = "cover."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me']).lower()
                 attrs = dict(hass.states.get(enid).attributes)
@@ -334,13 +341,17 @@ def setup(hass, config):
                 enid = "sensor."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
                 attrs = hass.states.get(enid).attributes
                 hass.states.set(enid, msg['msg']['val'], attrs)
-            elif devtype in SPOT_TYPES:
+            elif devtype in SPOT_TYPES or devtype in LIGHT_SWITCH_TYPES:
                 enid = "light."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
                 attrs = hass.states.get(enid).attributes
                 if msg['msg']['type'] % 2 == 1:
                     hass.states.set(enid, 'on',attrs)
                 else:
                     hass.states.set(enid, 'off',attrs)
+            #elif devtype in QUANTUM_TYPES and msg['msg']['idx'] == "P1":
+            #    enid = "light."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_P1").lower()
+            #    attrs = hass.states.get(enid).attributes
+            #    hass.states.set(enid, msg['msg']['val'], attrs)
             elif devtype in CLIMATE_TYPES:
                 enid = "climate."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me']).lower().replace(":","_").replace("@","_")
                 _idx = msg['msg']['idx']
@@ -372,19 +383,27 @@ def setup(hass, config):
                     attrs['current_temperature'] = msg['msg']['v']
                     hass.states.set(enid, nstat, attrs)
             elif devtype in LOCK_TYPES:
-                enid = "binary_sensor."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
-                val = msg['msg']['val']
-                ulk_way = val >> 12
-                ulk_user = val & 0xfff
-                ulk_success = True
-                if ulk_user == 0:
-                    ulk_success = False
-                attrs = {"unlocking_way": ulk_way,"unlocking_user": ulk_user,"devtype": devtype,"unlocking_success": ulk_success,"last_time": datetime.datetime.fromtimestamp(msg['msg']['ts']/1000).strftime("%Y-%m-%d %H:%M:%S") }
-                if msg['msg']['type'] % 2 == 1:
-                    hass.states.set(enid, 'on',attrs)
-                else:
-                    hass.states.set(enid, 'off',attrs)
-
+                if msg['msg']['idx'] == "BAT":
+                    enid = "sensor."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
+                    attrs = hass.states.get(enid).attributes
+                    hass.states.set(enid, msg['msg']['val'], attrs)
+                elif msg['msg']['idx'] == "EVTLO":
+                    enid = "binary_sensor."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
+                    val = msg['msg']['val']
+                    ulk_way = val >> 12
+                    ulk_user = val & 0xfff
+                    ulk_success = True
+                    if ulk_user == 0:
+                        ulk_success = False
+                    attrs = {"unlocking_way": ulk_way,"unlocking_user": ulk_user,"devtype": devtype,"unlocking_success": ulk_success,"last_time": datetime.datetime.fromtimestamp(msg['msg']['ts']/1000).strftime("%Y-%m-%d %H:%M:%S") }
+                    if msg['msg']['type'] % 2 == 1:
+                        hass.states.set(enid, 'on',attrs)
+                    else:
+                        hass.states.set(enid, 'off',attrs)
+            if devtype in OT_SENSOR_TYPES and msg['msg']['idx'] in ["Z","V","P3","P4"]:
+                enid = "sensor."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
+                attrs = hass.states.get(enid).attributes
+                hass.states.set(enid, msg['msg']['v'], attrs)
     def on_message(ws, message):
         _LOGGER.info("websocket_msg: %s",str(message))
         msg = json.loads(message)
