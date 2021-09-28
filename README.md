@@ -4,6 +4,12 @@ lifesmart 设备接入 HomeAssistant插件
 
 更新说明
 -------  
+[2020年12月26日更新]
+
+支持流光开关灯光控制
+
+更新manifest内容以适配新版本home assistant
+
 [2020年8月21日更新]
 
 新增设备支持：
