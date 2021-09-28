@@ -33,6 +33,7 @@ class LifeSmartBinarySensor(LifeSmartDevice, BinarySensorDevice):
 
     def __init__(self, dev, idx, val, param):
         super().__init__(dev, idx, val, param)
+        dev['agt'] = dev['agt'].replace("_","")
         self.entity_id = ENTITY_ID_FORMAT.format(( dev['devtype'] + "_" + dev['agt'] + "_" + dev['me'] + "_" + idx).lower())
         devtype = dev['devtype']
         if devtype in GUARD_SENSOR:
