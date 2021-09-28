@@ -54,7 +54,6 @@ class LifeSmartClimateDevice(LifeSmartDevice, ClimateDevice):
     def __init__(self, dev, idx, val, param):
         """Init LifeSmart cover device."""
         super().__init__(dev, idx, val, param)
-        dev['agt'] = dev['agt'].replace("_","")
         self._name = dev['name']
         cdata = dev['data']
         self.entity_id = ENTITY_ID_FORMAT.format(( dev['devtype'] + "_" + dev['agt'] + "_" + dev['me']).lower().replace(":","_").replace("@","_"))
@@ -69,7 +68,6 @@ class LifeSmartClimateDevice(LifeSmartDevice, ClimateDevice):
         self._min_temp = 10
         self._max_temp = 35
         self._fanspeed = cdata['F']['val']
-
 
     @property
     def precision(self):
