@@ -24,7 +24,8 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     param = discovery_info.get("param")
     devices = []
     for idx in dev['data']:
-        devices.append(LifeSmartSwitch(dev,idx,dev['data'][idx],param))
+        if idx in ["L1","L2","L3","P1","P2","P3"]:
+            devices.append(LifeSmartSwitch(dev,idx,dev['data'][idx],param))
     add_entities(devices)
     return True
 
@@ -36,7 +37,7 @@ class LifeSmartSwitch(LifeSmartDevice, SwitchDevice):
         super().__init__(dev, idx, val, param)
         dev['agt'] = dev['agt'].replace("_","")
         self.entity_id = ENTITY_ID_FORMAT.format(( dev['devtype'] + "_" + dev['agt'] + "_" + dev['me'] + "_" + idx).lower())
-        if val['val'] == 1:
+        if val['type'] %2 == 1:
             self._state = True
         else:
             self._state = False
