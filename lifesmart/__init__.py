@@ -125,7 +125,8 @@ HVAC_MODE_COOL,
 HVAC_MODE_HEAT,
 HVAC_MODE_DRY]
 
-CLIMATE_TYPES = ["V_AIR_P"]
+CLIMATE_TYPES = ["V_AIR_P",
+"SL_CP_DN"]
 
 ENTITYID = 'entity_id'
 DOMAIN = 'lifesmart'
@@ -244,6 +245,7 @@ def setup(hass, config):
         if dev['me'] in exclude_items:
             continue
         devtype = dev['devtype']
+        dev['agt'] = dev['agt'].replace("_","")
         if devtype in SWTICH_TYPES:
             discovery.load_platform(hass,"switch", DOMAIN, {"dev": dev,"param": param}, config)
         elif devtype in BINARY_SENSOR_TYPES:
@@ -300,22 +302,23 @@ def setup(hass, config):
     async def set_Event(msg):
         if msg['msg']['idx'] != "s" and msg['msg']['me'] not in exclude_items:
             devtype = msg['msg']['devtype']
+            agt = msg['msg']['agt'].replace("_","")
             if devtype in SWTICH_TYPES and msg['msg']['idx'] in ["L1","L2","L3","P1","P2","P3"]:
-                enid = "switch."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
+                enid = "switch."+(devtype + "_" + agt + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
                 attrs = hass.states.get(enid).attributes
                 if msg['msg']['type'] % 2 == 1:
                     hass.states.set(enid, 'on',attrs)
                 else:
                     hass.states.set(enid, 'off',attrs)
             elif devtype in BINARY_SENSOR_TYPES and msg['msg']['idx'] in ["M","G","B","AXS","P1"]:
-                enid = "binary_sensor."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
+                enid = "binary_sensor."+(devtype + "_" + agt + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
                 attrs = hass.states.get(enid).attributes
                 if msg['msg']['val'] == 1:
                     hass.states.set(enid, 'on',attrs)
                 else:
                     hass.states.set(enid, 'off',attrs)
             elif devtype in COVER_TYPES and msg['msg']['idx'] == "P1":
-                enid = "cover."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me']).lower()
+                enid = "cover."+(devtype + "_" + agt + "_" + msg['msg']['me']).lower()
                 attrs = dict(hass.states.get(enid).attributes)
                 nval = msg['msg']['val']
                 ntype = msg['msg']['type']
@@ -334,26 +337,26 @@ def setup(hass, config):
                         nstat = "closing"
                 hass.states.set(enid, nstat, attrs)
             elif devtype in EV_SENSOR_TYPES:
-                enid = "sensor."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
+                enid = "sensor."+(devtype + "_" + agt + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
                 attrs = hass.states.get(enid).attributes
                 hass.states.set(enid, msg['msg']['v'], attrs)
             elif devtype in GAS_SENSOR_TYPES and msg['msg']['val'] > 0:
-                enid = "sensor."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
+                enid = "sensor."+(devtype + "_" + agt + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
                 attrs = hass.states.get(enid).attributes
                 hass.states.set(enid, msg['msg']['val'], attrs)
             elif devtype in SPOT_TYPES or devtype in LIGHT_SWITCH_TYPES:
-                enid = "light."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
+                enid = "light."+(devtype + "_" + agt + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
                 attrs = hass.states.get(enid).attributes
                 if msg['msg']['type'] % 2 == 1:
                     hass.states.set(enid, 'on',attrs)
                 else:
                     hass.states.set(enid, 'off',attrs)
             #elif devtype in QUANTUM_TYPES and msg['msg']['idx'] == "P1":
-            #    enid = "light."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_P1").lower()
+            #    enid = "light."+(devtype + "_" + agt + "_" + msg['msg']['me'] + "_P1").lower()
             #    attrs = hass.states.get(enid).attributes
             #    hass.states.set(enid, msg['msg']['val'], attrs)
             elif devtype in CLIMATE_TYPES:
-                enid = "climate."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me']).lower().replace(":","_").replace("@","_")
+                enid = "climate."+(devtype + "_" + agt + "_" + msg['msg']['me']).lower().replace(":","_").replace("@","_")
                 _idx = msg['msg']['idx']
                 attrs = dict(hass.states.get(enid).attributes)
                 nstat = hass.states.get(enid).state
@@ -363,6 +366,20 @@ def setup(hass, config):
                     hass.states.set(enid, nstat, attrs)
                   else:
                     nstat = HVAC_MODE_OFF
+                    hass.states.set(enid, nstat, attrs)
+                if _idx == "P1":
+                  if msg['msg']['type'] % 2 == 1:
+                    nstat = HVAC_MODE_HEAT
+                    hass.states.set(enid, nstat, attrs)
+                  else:
+                    nstat = HVAC_MODE_OFF
+                    hass.states.set(enid, nstat, attrs)
+                if _idx == "P2":
+                  if msg['msg']['type'] % 2 == 1:
+                    attrs['Heating'] = "true"
+                    hass.states.set(enid, nstat, attrs)
+                  else:
+                    attrs['Heating'] = "false"
                     hass.states.set(enid, nstat, attrs)
                 elif _idx == "MODE":
                   if msg['msg']['type'] == 206:
@@ -374,21 +391,21 @@ def setup(hass, config):
                   if msg['msg']['type'] == 206:
                     attrs['fan_mode'] = get_fan_mode(msg['msg']['val'])
                     hass.states.set(enid, nstat, attrs)
-                elif _idx == "tT":
+                elif _idx == "tT" or _idx == "P3":
                   if msg['msg']['type'] == 136:
                     attrs['temperature'] = msg['msg']['v']
                     hass.states.set(enid, nstat, attrs)
-                elif _idx == "T":
-                  if msg['msg']['type'] == 8:
+                elif _idx == "T" or _idx == "P4":
+                  if msg['msg']['type'] == 8 or msg['msg']['type'] == 9:
                     attrs['current_temperature'] = msg['msg']['v']
                     hass.states.set(enid, nstat, attrs)
             elif devtype in LOCK_TYPES:
                 if msg['msg']['idx'] == "BAT":
-                    enid = "sensor."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
+                    enid = "sensor."+(devtype + "_" + agt + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
                     attrs = hass.states.get(enid).attributes
                     hass.states.set(enid, msg['msg']['val'], attrs)
                 elif msg['msg']['idx'] == "EVTLO":
-                    enid = "binary_sensor."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
+                    enid = "binary_sensor."+(devtype + "_" + agt + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
                     val = msg['msg']['val']
                     ulk_way = val >> 12
                     ulk_user = val & 0xfff
@@ -401,7 +418,7 @@ def setup(hass, config):
                     else:
                         hass.states.set(enid, 'off',attrs)
             if devtype in OT_SENSOR_TYPES and msg['msg']['idx'] in ["Z","V","P3","P4"]:
-                enid = "sensor."+(devtype + "_" + msg['msg']['agt'] + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
+                enid = "sensor."+(devtype + "_" + agt + "_" + msg['msg']['me'] + "_" + msg['msg']['idx']).lower()
                 attrs = hass.states.get(enid).attributes
                 hass.states.set(enid, msg['msg']['v'], attrs)
     def on_message(ws, message):

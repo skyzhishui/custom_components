@@ -16,9 +16,12 @@ GAS_SENSOR_TYPES = ["SL_SC_WA ",
 "SL_SC_CH",
 "SL_SC_CP",
 "ELIQ_EM"]
-EV_SENSOR_TYPES = ["SL_SC_THL",
-"SL_SC_BE",
-"SL_SC_CQ"]
+
+OT_SENSOR_TYPES = ["SL_SC_MHW",
+"SL_SC_BM",
+"SL_SC_G",
+"SL_SC_BG"]
+
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Perform the setup for LifeSmart devices."""
@@ -27,7 +30,10 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     param = discovery_info.get("param")
     devices = []
     for idx in dev['data']:
-        devices.append(LifeSmartSensor(dev,idx,dev['data'][idx],param))
+        if dev['devtype'] in OT_SENSOR_TYPES and idx in ["Z","V","P3","P4"]:
+            devices.append(LifeSmartSensor(dev,idx,dev['data'][idx],param))
+        else:
+            devices.append(LifeSmartSensor(dev,idx,dev['data'][idx],param))
     add_entities(devices)
 
 
@@ -37,10 +43,13 @@ class LifeSmartSensor(LifeSmartDevice):
     def __init__(self, dev, idx, val, param):
         """Initialize the LifeSmartSensor."""
         super().__init__(dev, idx, val, param)
-        dev['agt'] = dev['agt'].replace("_","")
         self.entity_id = ENTITY_ID_FORMAT.format(( dev['devtype'] + "_" + dev['agt'] + "_" + dev['me'] + "_" + idx).lower())
         devtype = dev['devtype']
-        if devtype in EV_SENSOR_TYPES:
+        if devtype in GAS_SENSOR_TYPES:
+            self._unit = "None"
+            self._device_class = "None"
+            self._state = val['val']
+        else:
             if idx == "T" or idx == "P1":
                 self._device_class = "temperature"
                 self._unit = TEMP_CELSIUS
@@ -60,13 +69,9 @@ class LifeSmartSensor(LifeSmartDevice):
                 self._device_class = "None"
                 self._unit = "mg/m3"
             else:
-                self._device_class = "None"
                 self._unit = "None"
+                self._device_class = "None"
             self._state = val['v']
-        else:
-            self._unit = "None"
-            self._device_class = "None"
-            self._state = val['val']
 
 
     @property
