@@ -1,7 +1,7 @@
 """Support for the LifeSmart climate devices."""
 import logging
 import time
-from homeassistant.components.climate import ENTITY_ID_FORMAT, ClimateDevice
+from homeassistant.components.climate import ENTITY_ID_FORMAT, ClimateEntity
 from homeassistant.components.climate.const import (
     HVAC_MODE_AUTO,
     HVAC_MODE_COOL,
@@ -56,7 +56,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     devices.append(LifeSmartClimateDevice(dev,"idx","0",param))
     add_entities(devices)
 
-class LifeSmartClimateDevice(LifeSmartDevice, ClimateDevice):
+class LifeSmartClimateDevice(LifeSmartDevice, ClimateEntity):
     """LifeSmart climate devices,include air conditioner,heater."""
 
     def __init__(self, dev, idx, val, param):
