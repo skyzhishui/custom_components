@@ -11,7 +11,7 @@ from homeassistant.components.light import (
     ATTR_HS_COLOR,
     SUPPORT_BRIGHTNESS,
     SUPPORT_COLOR,
-    Light,
+    LightEntity,
 	ENTITY_ID_FORMAT,
 )
 import homeassistant.util.color as color_util
@@ -40,7 +40,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
             devices.append(LifeSmartLight(dev,idx,dev['data'][idx],param))
     add_entities(devices)
 
-class LifeSmartLight(LifeSmartDevice, Light):
+class LifeSmartLight(LifeSmartDevice, LightEntity):
     """Representation of a LifeSmartLight."""
 
     def __init__(self, dev, idx, val, param):

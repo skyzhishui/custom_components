@@ -9,7 +9,7 @@ from . import LifeSmartDevice
 
 
 from homeassistant.components.switch import (
-    SwitchDevice,
+    SwitchEntity,
     ENTITY_ID_FORMAT,
 )
 
@@ -29,7 +29,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     add_entities(devices)
     return True
 
-class LifeSmartSwitch(LifeSmartDevice, SwitchDevice):
+class LifeSmartSwitch(LifeSmartDevice, SwitchEntity):
     
 
     def __init__(self, dev, idx, val, param):
