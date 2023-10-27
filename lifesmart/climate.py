@@ -1,7 +1,7 @@
 """Support for the LifeSmart climate devices."""
 import logging
 import time
-from homeassistant.components.climate import ENTITY_ID_FORMAT, ClimateDevice
+from homeassistant.components.climate import ENTITY_ID_FORMAT, ClimateEntity
 from homeassistant.components.climate.const import (
     HVAC_MODE_AUTO,
     HVAC_MODE_COOL,
@@ -12,7 +12,7 @@ from homeassistant.components.climate.const import (
     SUPPORT_TARGET_TEMPERATURE,
     HVAC_MODE_OFF,
 )
-from homeassistant.components.fan import SPEED_HIGH, SPEED_LOW, SPEED_MEDIUM
+
 from homeassistant.const import (
     ATTR_TEMPERATURE,
     PRECISION_WHOLE,
@@ -20,7 +20,7 @@ from homeassistant.const import (
     TEMP_FAHRENHEIT,
 )
 
-from . import LifeSmartDevice
+from . import LifeSmartEntity
 _LOGGER = logging.getLogger(__name__)
 DEVICE_TYPE = "climate"
 
@@ -34,12 +34,18 @@ HVAC_MODE_DRY]
 LIFESMART_STATE_LIST2 = [HVAC_MODE_OFF,
 HVAC_MODE_HEAT]
 
+SPEED_OFF = "Speed_Off"
+SPEED_LOW = "Speed_Low"
+SPEED_MEDIUM = "Speed_Medium"
+SPEED_HIGH = "Speed_High"
+
 FAN_MODES = [SPEED_LOW, SPEED_MEDIUM, SPEED_HIGH]
 GET_FAN_SPEED = { SPEED_LOW:15, SPEED_MEDIUM:45, SPEED_HIGH:76 }
 
 AIR_TYPES=["V_AIR_P"]
 
 THER_TYPES = ["SL_CP_DN"]
+
 
 LIFESMART_STATE_LIST
 
@@ -53,10 +59,10 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     devices = []
     if "T" not in dev['data'] and "P3" not in dev['data']:
         return
-    devices.append(LifeSmartClimateDevice(dev,"idx","0",param))
+    devices.append(LifeSmartClimateEntity(dev,"idx","0",param))
     add_entities(devices)
 
-class LifeSmartClimateDevice(LifeSmartDevice, ClimateDevice):
+class LifeSmartClimateEntity(LifeSmartEntity, ClimateEntity):
     """LifeSmart climate devices,include air conditioner,heater."""
 
     def __init__(self, dev, idx, val, param):
@@ -64,6 +70,7 @@ class LifeSmartClimateDevice(LifeSmartDevice, ClimateDevice):
         super().__init__(dev, idx, val, param)
         self._name = dev['name']
         cdata = dev['data']
+        #_LOGGER.info("climate.py_cdata: %s",str(cdata))
         self.entity_id = ENTITY_ID_FORMAT.format(( dev['devtype'] + "_" + dev['agt'] + "_" + dev['me']).lower().replace(":","_").replace("@","_"))
         if dev['devtype'] in AIR_TYPES:
             self._modes = LIFESMART_STATE_LIST
@@ -72,6 +79,7 @@ class LifeSmartClimateDevice(LifeSmartDevice, ClimateDevice):
             else:
                 self._mode = LIFESMART_STATE_LIST[cdata['MODE']['val']]
             self._attributes.update({"last_mode": LIFESMART_STATE_LIST[cdata['MODE']['val']]})
+            _LOGGER.info("climate.py_self._attributes: %s",str(self._attributes))
             self._current_temperature = cdata['T']['v']
             self._target_temperature = cdata['tT']['v']
             self._min_temp = 10

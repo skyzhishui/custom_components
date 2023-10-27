@@ -27,7 +27,6 @@ from homeassistant.components.climate.const import (
     SUPPORT_TARGET_TEMPERATURE,
     HVAC_MODE_OFF,
 )
-from homeassistant.components.fan import SPEED_HIGH, SPEED_LOW, SPEED_MEDIUM
 from homeassistant.core import callback
 from homeassistant.helpers import discovery
 import homeassistant.helpers.config_validation as cv
@@ -40,6 +39,8 @@ _LOGGER = logging.getLogger(__name__)
 CONF_LIFESMART_APPKEY = "appkey"
 CONF_LIFESMART_APPTOKEN = "apptoken"
 CONF_LIFESMART_USERTOKEN = "usertoken"
+CONF_LIFESMART_USERNAME = "username"
+CONF_LIFESMART_PASSWORD = "password"
 CONF_LIFESMART_USERID = "userid"
 CONF_EXCLUDE_ITEMS = "exclude"
 SWTICH_TYPES = ["SL_SF_RC",
@@ -117,6 +118,11 @@ LOCK_TYPES = ["SL_LK_LS",
 "SL_LK_AG",
 "SL_LK_SG",
 "SL_LK_YL"]
+
+SPEED_OFF = "Speed_Off"
+SPEED_LOW = "Speed_Low"
+SPEED_MEDIUM = "Speed_Medium"
+SPEED_HIGH = "Speed_High"
 
 LIFESMART_STATE_LIST = [HVAC_MODE_OFF,
 HVAC_MODE_AUTO,
@@ -232,13 +238,49 @@ def lifesmart_Sendackeys(appkey,apptoken,usertoken,userid,agt,ai,me,category,bra
     _LOGGER.debug("sendackey_res: %s",str(response))
     return response 
 
+def lifesmart_Login(uid,pwd,appkey):
+    url = "https://api.ilifesmart.com/app/auth.login"
+    login_data = {
+      "uid": uid,
+      "pwd": pwd,
+      "appkey": appkey
+    }
+    header = {'Content-Type': 'application/json'}
+    req = urllib.request.Request(url=url, data=json.dumps(login_data).encode('utf-8'),headers=header, method='POST')
+    response = json.loads(urllib.request.urlopen(req).read().decode('utf-8'))
+    return response
+
+def lifesmart_doAuth(userid,token,appkey):
+    url = "https://api.ilifesmart.com/app/auth.do_auth"
+    auth_data = {
+      "userid": userid,
+      "token": token,
+      "appkey": appkey,
+      "rgn": "cn"
+    }
+    header = {'Content-Type': 'application/json'}
+    req = urllib.request.Request(url=url, data=json.dumps(auth_data).encode('utf-8'),headers=header, method='POST')
+    response = json.loads(urllib.request.urlopen(req).read().decode('utf-8'))
+    return response
+
 def setup(hass, config):
     """Set up the lifesmart component."""
     param = {}
     param['appkey'] = config[DOMAIN][CONF_LIFESMART_APPKEY]
     param['apptoken'] = config[DOMAIN][CONF_LIFESMART_APPTOKEN]
-    param['usertoken'] = config[DOMAIN][CONF_LIFESMART_USERTOKEN]
-    param['userid'] = config[DOMAIN][CONF_LIFESMART_USERID]
+    #param['usertoken'] = config[DOMAIN][CONF_LIFESMART_USERTOKEN]
+    #param['userid'] = config[DOMAIN][CONF_LIFESMART_USERID]
+    param['username'] = config[DOMAIN][CONF_LIFESMART_USERNAME]
+    param['passwd'] = config[DOMAIN][CONF_LIFESMART_PASSWORD]
+    res_login = lifesmart_Login(param['username'],param['passwd'],param['appkey'])
+    if res_login['code'] == "error":
+      _LOGGER.error("login fail: %s",str(res_login['message']))
+    param['token'] = res_login['token']
+    param['userid'] = res_login['userid']
+    res_doauth = lifesmart_doAuth(param['userid'],param['token'],param['appkey'])
+    if res_doauth['code'] == "error":
+      _LOGGER.error("login fail: %s",str(res_doauth['message']))
+    param['usertoken'] = res_doauth['usertoken']
     exclude_items = config[DOMAIN][CONF_EXCLUDE_ITEMS]
     devices = lifesmart_EpGetAll(param['appkey'],param['apptoken'],param['usertoken'],param['userid'])
     for dev in devices:
@@ -357,9 +399,14 @@ def setup(hass, config):
             #    hass.states.set(enid, msg['msg']['val'], attrs)
             elif devtype in CLIMATE_TYPES:
                 enid = "climate."+(devtype + "_" + agt + "_" + msg['msg']['me']).lower().replace(":","_").replace("@","_")
+                #climate.v_air_p_a3yaaabbaegdrzcznti3mg_8ae5_1_2_1
                 _idx = msg['msg']['idx']
                 attrs = dict(hass.states.get(enid).attributes)
                 nstat = hass.states.get(enid).state
+                _LOGGER.info("enid: %s",str(enid))
+                _LOGGER.info("_idx: %s",str(_idx))
+                _LOGGER.info("attrs: %s",str(attrs))
+                _LOGGER.info("nstat: %s",str(nstat))
                 if _idx == "O":
                   if msg['msg']['type'] % 2 == 1:
                     nstat = attrs['last_mode']
@@ -385,7 +432,7 @@ def setup(hass, config):
                   if msg['msg']['type'] == 206:
                     if nstat != HVAC_MODE_OFF:
                       nstat = LIFESMART_STATE_LIST[msg['msg']['val']]
-                    attrs['last_mode'] = nstat
+                    attrs['last_mode'] = LIFESMART_STATE_LIST[msg['msg']['val']]
                     hass.states.set(enid, nstat, attrs)
                 elif _idx == "F":
                   if msg['msg']['type'] == 206:
@@ -468,7 +515,7 @@ def setup(hass, config):
     hass.data[LifeSmart_STATE_MANAGER].start_keep_alive()
     return True
 
-class LifeSmartDevice(Entity):
+class LifeSmartEntity(Entity):
     """LifeSmart base device."""
 
     def __init__(self, dev, idx, val, param):
@@ -492,8 +539,13 @@ class LifeSmartDevice(Entity):
         return self.entity_id
 
     @property
-    def device_state_attributes(self):
+    def state_attrs(self):
         """Return the state attributes."""
+        return self._attributes
+
+    @property
+    def extra_state_attributes(self):
+        """Return the extra state attributes of the device."""
         return self._attributes
 
     @property

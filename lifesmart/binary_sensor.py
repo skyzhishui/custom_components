@@ -1,11 +1,11 @@
 """Support for LifeSmart binary sensors."""
 import logging
 from homeassistant.components.binary_sensor import (
-    BinarySensorDevice,
+    BinarySensorEntity,
     ENTITY_ID_FORMAT,
 )
 
-from . import LifeSmartDevice
+from . import LifeSmartEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
             devices.append(LifeSmartBinarySensor(dev,idx,dev['data'][idx],param))
     add_entities(devices)
 
-class LifeSmartBinarySensor(LifeSmartDevice, BinarySensorDevice):
+class LifeSmartBinarySensor(LifeSmartEntity, BinarySensorEntity):
     """Representation of LifeSmartBinarySensor."""
 
     def __init__(self, dev, idx, val, param):

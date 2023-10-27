@@ -2,20 +2,20 @@ send_keys:
   description: send keys.
   fields:
     me:
-      description: 设备me值
+      description: test.
       example: '0010'
     agt:
-      description: 智慧中心agt
+      description: test2.
       example: '_xXXXXXXXXXXXXXXXXX'
     ai:
-      description: 遥控器AI
+      description: test3
       example: 'AI_IR_xxxx_xxxxxxxx'
     category:
-      description: 遥控设备类别
+      description: test4
       example: 'custom'
     brand:
-      description: 遥控器品牌
+      description: test5
       example: 'custom'
     keys:
-      description: 遥控器命令key
+      description: test6
       example: '["key"]'

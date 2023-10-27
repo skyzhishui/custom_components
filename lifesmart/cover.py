@@ -2,10 +2,10 @@
 from homeassistant.components.cover import (
     ENTITY_ID_FORMAT,
     ATTR_POSITION,
-    CoverDevice,
+    CoverEntity,
 )
 
-from . import LifeSmartDevice
+from . import LifeSmartEntity
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -20,7 +20,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     add_entities(devices)
 
 
-class LifeSmartCover(LifeSmartDevice, CoverDevice):
+class LifeSmartCover(LifeSmartEntity, CoverEntity):
     """LifeSmart cover devices."""
 
     def __init__(self, dev, idx, val, param):

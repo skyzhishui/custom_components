@@ -8,7 +8,7 @@ from homeassistant.const import (
 DOMAIN = "sensor"
 ENTITY_ID_FORMAT = DOMAIN + ".{}"
 
-from . import  LifeSmartDevice
+from . import  LifeSmartEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -37,7 +37,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     add_entities(devices)
 
 
-class LifeSmartSensor(LifeSmartDevice):
+class LifeSmartSensor(LifeSmartEntity):
     """Representation of a LifeSmartSensor."""
 
     def __init__(self, dev, idx, val, param):

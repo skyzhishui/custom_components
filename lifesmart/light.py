@@ -11,21 +11,15 @@ from homeassistant.components.light import (
     ATTR_HS_COLOR,
     SUPPORT_BRIGHTNESS,
     SUPPORT_COLOR,
-    Light,
+    LightEntity,
 	ENTITY_ID_FORMAT,
 )
 import homeassistant.util.color as color_util
 
-from . import  LifeSmartDevice
+from . import  LifeSmartEntity
 
 _LOGGER = logging.getLogger(__name__)
 
-QUANTUM_TYPES=["OD_WE_QUAN",
-]
-
-SPOT_TYPES = ["MSL_IRCTL",
-"OD_WE_IRCTL",
-"SL_SPOT"]
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
@@ -36,18 +30,17 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     param = discovery_info.get("param")
     devices = []
     for idx in dev['data']:
-        if idx in ["RGB","RGBW","dark","dark1","dark2","dark3","bright","bright1","bright2","bright"]:
+        if idx in ["RGB","RGBW"]:
             devices.append(LifeSmartLight(dev,idx,dev['data'][idx],param))
     add_entities(devices)
 
-class LifeSmartLight(LifeSmartDevice, Light):
+class LifeSmartLight(LifeSmartEntity, LightEntity):
     """Representation of a LifeSmartLight."""
 
     def __init__(self, dev, idx, val, param):
         """Initialize the LifeSmartLight."""
         super().__init__(dev, idx, val, param)
         self.entity_id = ENTITY_ID_FORMAT.format(( dev['devtype'] + "_" + dev['agt'] + "_" + dev['me'] + "_" + idx).lower())
-        #_LOGGER.info("light: %s added..",str(self.entity_id))
         if val['type'] % 2 == 1:
             self._state = True
         else:
@@ -66,12 +59,10 @@ class LifeSmartLight(LifeSmartDevice, Light):
 
 
     async def async_added_to_hass(self):
-        if self._devtype not in SPOT_TYPES:
-            return
         rmdata = {}
-        rmlist = LifeSmartLight._lifesmart_GetRemoteList(self)
+        rmlist = await self.hass.async_add_executor_job(LifeSmartLight._lifesmart_GetRemoteList,self)
         for ai in rmlist:
-            rms = LifeSmartLight._lifesmart_GetRemotes(self,ai)
+            rms = await self.hass.async_add_executor_job(LifeSmartLight._lifesmart_GetRemotes,self,ai)
             rms['category'] = rmlist[ai]['category']
             rms['brand'] = rmlist[ai]['brand']
             rmdata[ai] = rms
