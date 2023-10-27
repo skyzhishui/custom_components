@@ -4,6 +4,12 @@ lifesmart 设备接入 HomeAssistant插件
 
 更新说明
 -------  
+[latest]
+
+1、基于新版本homeassistant更新依赖名，解决新版本失效的问题；
+
+2、变更lifesmart认证方式为账号密码。
+
 [2020年12月26日更新]
 
 支持流光开关灯光控制
@@ -56,8 +62,8 @@ PS：其实就是个开关...
 lifesmart:
   appkey: "your_appkey" 
   apptoken: "your_apptoken"
-  usertoken: "your_usertoken" 
-  userid: "your_userid"
+  username: "your_username" 
+  password: "your_password"
   exclude:
     - "0011" #需屏蔽设备的me值,这个暂时为必填项，可以填任意内容
 ```
